@@ -1,0 +1,28 @@
+name: Cypress Cucumber Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  cypress-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout repo
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Docker Buildx (optional, but recommended)
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Build Docker image
+      - name: Build Docker Image
+        run: docker build -t cucumber-cypress-tests .
+
+      # Step 4: Run tests inside Docker
+      - name: Run Cypress Cucumber Tests
+        run: docker run --rm cucumber-cypress-tests
