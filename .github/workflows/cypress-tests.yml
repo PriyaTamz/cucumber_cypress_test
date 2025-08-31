@@ -7,22 +7,39 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  cypress-tests:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
+      # Step 1: Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # Step 2: Set up Docker
+      # Step 2: Set up Docker Buildx
       - name: Set up Docker
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Build Docker image for tests
+      # Step 3: Build the Cypress Docker image
       - name: Build Docker Image
         run: docker build -t cucumber-cypress-tests .
 
-      # Step 4: Run tests inside container
+      # Step 4: Start the container in detached mode
+      - name: Start Cypress container
+        run: docker run -d --name cypress-container cucumber-cypress-tests tail -f /dev/null
+
+      # Step 5: Wait until the healthcheck passes
+      - name: Wait for Cypress container to be healthy
+        run: |
+          echo "Waiting for Cypress container to be healthy..."
+          until [ "$(docker inspect -f '{{.State.Health.Status}}' cypress-container)" = "healthy" ]; do
+            sleep 5
+          done
+          echo "Cypress container is healthy!"
+
+      # Step 6: Run Cypress tests inside the container
       - name: Run Cypress Cucumber Tests
-        run: docker run --rm cucumber-cypress-tests
+        run: docker exec cypress-container npx cypress run --browser electron
+
+      # Step 7: Stop and remove the container after tests
+      - name: Cleanup
+        run: docker rm -f cypress-container

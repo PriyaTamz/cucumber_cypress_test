@@ -1,12 +1,18 @@
 services:
   cypress:
     build: .
+    image: cucumber-cypress-test:latest
     working_dir: /e2e
     volumes:
       - .:/e2e
-      - /e2e/node_modules   # prevents overwriting node_modules with host version
+      - /e2e/node_modules
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - CYPRESS_CACHE_FOLDER=/home/cypress/.cache/Cypress
     command: >
       npx cypress run --browser electron
+    healthcheck:
+      test: ["CMD-SHELL", "npx cypress verify || exit 1"]
+      interval: 30s
+      retries: 3
+      start_period: 10s
